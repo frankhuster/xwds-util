@@ -8,7 +8,7 @@ require "google/cloud/firestore"
 # lines - which, for Google Firestore, is 500
 # Assuming any file in the ./words/added/ directory was successfully added
 
-DAILY_IMPORT_LIMIT = 15000
+DAILY_IMPORT_LIMIT = 18000
 
 def added_dir(today)
   "words/added/#{today}"
