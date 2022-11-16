@@ -1,14 +1,15 @@
 #!/usr/bin/env ruby
 
-require "bundler/setup"
-require "fileutils"
-require "google/cloud/firestore"
+require 'bundler/setup'
+require 'fileutils'
+require 'google/cloud/firestore'
+require 'tzinfo'
 
 # Assuming a ./words/ directory with files containing at most {bulk transaction size}
 # lines - which, for Google Firestore, is 500
 # Assuming any file in the ./words/added/ directory was successfully added
 
-DAILY_IMPORT_LIMIT = 18000
+DAILY_IMPORT_LIMIT = 18_000
 
 def added_dir(today)
   "words/added/#{today}"
@@ -16,7 +17,7 @@ end
 
 def dir_word_count(dir)
   word_count = 0
-  if Dir.exists?(dir)
+  if Dir.exist?(dir)
     Dir.glob("#{dir}/*").each do |path|
       word_count += File.readlines(path).length
     end
@@ -28,7 +29,7 @@ def add_line(b, line)
   word_length = line.index(' ')
   word = line[0, word_length]
   desc = line[(word_length + 1)..]
-  b.set("dictionary/#{word}", { word: word, description: desc })
+  b.set("dictionary/#{word}", { word:, description: desc })
 end
 
 def add_todays_words(db, today)
@@ -36,7 +37,7 @@ def add_todays_words(db, today)
   words_added_today = dir_word_count(todays_dir)
   while words_added_today < DAILY_IMPORT_LIMIT
     FileUtils.mkdir_p(todays_dir)
-    path = Dir.glob("words/*").select { |f| File.file?(f) }.sort.first
+    path = Dir.glob('words/*').select { |f| File.file?(f) }.sort.first
     lines = File.readlines(path)
     db.batch do |b|
       lines.each do |line|
@@ -49,5 +50,6 @@ def add_todays_words(db, today)
   end
 end
 
-db = Google::Cloud::Firestore.new project_id: "xwds-368015"
-add_todays_words(db, Time.now.strftime("%Y%0m%0d"))
+db = Google::Cloud::Firestore.new project_id: 'xwds-368015'
+today = TZInfo::Timezone.get('US/Pacific').now.strftime('%Y%0m%0d')
+add_todays_words(db, today)
